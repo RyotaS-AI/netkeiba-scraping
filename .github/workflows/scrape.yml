@@ -8,8 +8,8 @@ on:
         required: false
         type: string
   schedule:
-    # テスト用: 20:25 JST (11:25 UTC) ※テスト後に元に戻すこと
-    - cron: '25 11 * * *'
+    # テスト用: 20:40 JST (11:40 UTC) ※テスト後に元に戻すこと
+    - cron: '40 11 * * *'
 
 jobs:
   scrape:
