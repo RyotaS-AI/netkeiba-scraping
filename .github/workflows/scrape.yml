@@ -4,12 +4,12 @@ on:
   workflow_dispatch:
     inputs:
       race_id:
-        description: "対象レースのrace_id（12桁）"
-        required: true
+        description: "race_id（12桁）。空欄の場合はschedule.jsonを実行"
+        required: false
+        default: ""
         type: string
   schedule:
-    # 金・土・日曜に30分ごとに起動し、schedule.jsonで時刻管理する
-    # (金曜UTC = 土曜JST、土曜UTC = 日曜JSTに対応するため金曜も含む)
+    # バックアップ用（信頼性低いため cron-job.org を主軸にする）
     - cron: '*/30 * * * 5,6,0'
 
 jobs:
@@ -37,7 +37,7 @@ jobs:
           GOOGLE_OAUTH_REFRESH_TOKEN: ${{ secrets.GOOGLE_OAUTH_REFRESH_TOKEN }}
           GOOGLE_DRIVE_FOLDER_ID: ${{ secrets.GOOGLE_DRIVE_FOLDER_ID }}
         run: |
-          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+          if [ -n "${{ github.event.inputs.race_id }}" ]; then
             python main.py "${{ github.event.inputs.race_id }}"
           else
             python run_scheduled.py
