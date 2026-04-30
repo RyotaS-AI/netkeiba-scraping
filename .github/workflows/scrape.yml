@@ -8,8 +8,9 @@ on:
         required: true
         type: string
   schedule:
-    # テスト用: UTC 11:55 (JST 20:55) ※テスト後に元に戻すこと
-    - cron: '55 11 * * *'
+    # 金・土・日曜に30分ごとに起動し、schedule.jsonで時刻管理する
+    # (金曜UTC = 土曜JST、土曜UTC = 日曜JSTに対応するため金曜も含む)
+    - cron: '*/30 * * * 5,6,0'
 
 jobs:
   scrape:
