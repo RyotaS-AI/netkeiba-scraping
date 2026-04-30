@@ -4,12 +4,12 @@ on:
   workflow_dispatch:
     inputs:
       race_id:
-        description: "対象レースのrace_id（12桁）。空欄の場合はrace_ids.txtを使用"
-        required: false
+        description: "対象レースのrace_id（12桁）"
+        required: true
         type: string
   schedule:
-    # テスト用: 20:40 JST (11:40 UTC) ※テスト後に元に戻すこと
-    - cron: '40 11 * * *'
+    # テスト用: UTC 11:55 (JST 20:55) ※テスト後に元に戻すこと
+    - cron: '55 11 * * *'
 
 jobs:
   scrape:
@@ -36,16 +36,8 @@ jobs:
           GOOGLE_OAUTH_REFRESH_TOKEN: ${{ secrets.GOOGLE_OAUTH_REFRESH_TOKEN }}
           GOOGLE_DRIVE_FOLDER_ID: ${{ secrets.GOOGLE_DRIVE_FOLDER_ID }}
         run: |
-          if [ -n "${{ github.event.inputs.race_id }}" ]; then
-            # 手動実行でrace_idが指定された場合
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
             python main.py "${{ github.event.inputs.race_id }}"
           else
-            # race_ids.txtから読み込んで順番に実行
-            while IFS= read -r race_id || [ -n "$race_id" ]; do
-              race_id=$(echo "$race_id" | tr -d '[:space:]')
-              [ -z "$race_id" ] && continue
-              [[ "$race_id" == \#* ]] && continue
-              echo "=== race_id: $race_id を実行中 ==="
-              python main.py "$race_id"
-            done < race_ids.txt
+            python run_scheduled.py
           fi
