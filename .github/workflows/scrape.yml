@@ -4,9 +4,12 @@ on:
   workflow_dispatch:
     inputs:
       race_id:
-        description: "対象レースのrace_id（12桁）"
-        required: true
+        description: "対象レースのrace_id（12桁）。空欄の場合はrace_ids.txtを使用"
+        required: false
         type: string
+  schedule:
+    # 毎週土曜・日曜の 7:00 AM JST (金曜・土曜 22:00 UTC) に自動実行
+    - cron: '0 22 * * 5,6'
 
 jobs:
   scrape:
@@ -32,4 +35,17 @@ jobs:
           GOOGLE_OAUTH_CLIENT_SECRET: ${{ secrets.GOOGLE_OAUTH_CLIENT_SECRET }}
           GOOGLE_OAUTH_REFRESH_TOKEN: ${{ secrets.GOOGLE_OAUTH_REFRESH_TOKEN }}
           GOOGLE_DRIVE_FOLDER_ID: ${{ secrets.GOOGLE_DRIVE_FOLDER_ID }}
-        run: python main.py ${{ github.event.inputs.race_id }}
+        run: |
+          if [ -n "${{ github.event.inputs.race_id }}" ]; then
+            # 手動実行でrace_idが指定された場合
+            python main.py "${{ github.event.inputs.race_id }}"
+          else
+            # race_ids.txtから読み込んで順番に実行
+            while IFS= read -r race_id || [ -n "$race_id" ]; do
+              race_id=$(echo "$race_id" | tr -d '[:space:]')
+              [ -z "$race_id" ] && continue
+              [[ "$race_id" == \#* ]] && continue
+              echo "=== race_id: $race_id を実行中 ==="
+              python main.py "$race_id"
+            done < race_ids.txt
+          fi
