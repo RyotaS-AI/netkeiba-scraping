@@ -8,8 +8,8 @@ on:
         required: false
         type: string
   schedule:
-    # 毎週土曜・日曜の 7:00 AM JST (金曜・土曜 22:00 UTC) に自動実行
-    - cron: '0 22 * * 5,6'
+    # テスト用: 20:25 JST (11:25 UTC) ※テスト後に元に戻すこと
+    - cron: '25 11 * * *'
 
 jobs:
   scrape:
