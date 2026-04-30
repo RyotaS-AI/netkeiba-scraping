@@ -1,0 +1,33 @@
+name: 競馬スクレイピング
+
+on:
+  workflow_dispatch:
+    inputs:
+      race_id:
+        description: "対象レースのrace_id（12桁）"
+        required: true
+        type: string
+
+jobs:
+  scrape:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: リポジトリをチェックアウト
+        uses: actions/checkout@v4
+
+      - name: Python 3.11 をセットアップ
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: 依存パッケージをインストール
+        run: pip install -r requirements.txt
+
+      - name: スクレイピングを実行
+        env:
+          NETKEIBA_LOGIN_ID: ${{ secrets.NETKEIBA_LOGIN_ID }}
+          NETKEIBA_PASSWORD: ${{ secrets.NETKEIBA_PASSWORD }}
+          GOOGLE_SERVICE_ACCOUNT_JSON: ${{ secrets.GOOGLE_SERVICE_ACCOUNT_JSON }}
+          GOOGLE_DRIVE_FOLDER_ID: ${{ secrets.GOOGLE_DRIVE_FOLDER_ID }}
+        run: python main.py ${{ github.event.inputs.race_id }}

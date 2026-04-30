@@ -1,0 +1,7 @@
+requests
+beautifulsoup4
+pandas
+python-dotenv
+lxml
+google-api-python-client
+google-auth

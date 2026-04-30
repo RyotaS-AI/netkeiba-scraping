@@ -1,0 +1,59 @@
+■やりたいこと
+①バッチの実行自動化
+　・レース前日の夕方（例えばレースが日曜日なら土曜日の夕方）に「初回実行」を行いファイルを作成する
+　・レース当日のレース１時間前に「２回目の実行」を行いファイルを作成する　※レース時刻は競馬場によって異なる
+
+②レース情報（race_id）のマスター化とバッチ実行で分析するレースのスケジューリング
+　バッチの引数は race_id（スクレイピングする競馬ページの race_id[レース番号は毎年決まった仕様で採番される]）
+　・指定したレースのバッチを任意のタイミングで実行できるようにしたい
+
+（できたらいいな）
+・バッチファイルが作成したファイルはGoogleドライブに保存したい
+・
+
+
+■ツール
+概要
+→netkeiba（https://race.netkeiba.com）および Yahoo!スポーツナビ競馬（https://sports.yahoo.co.jp/keiba/）の競馬レース関連ページから、出馬情報・オッズ・調教情報・厩舎コメントなどを自動取得し、CSV形式でファイル出力するツールです。
+
+仕様書
+→ netkeiba_scraping\docs\仕様書.md  (3.1 事前準備 に必要なパッケージ記載)
+
+実行
+→keiba_scraping.bat
+
+
+■追記
+初期設定手順
+
+1. Google Cloud でサービスアカウントを作成
+Google Cloud Console でプロジェクトを作成（無料）
+Google Drive API を有効化
+「IAMと管理」→「サービスアカウント」→「作成」
+「作成して続行」を押すと「ロールを付与」という画面が出ますが、
+ロールは設定不要です（Google Driveのフォルダ共有で権限を渡すため）。
+そのまま「完了」まで進めてください。
+
+作成後は、サービスアカウントの一覧に表示されるので、
+そのアカウントをクリック → 「キー」タブ → 「鍵を追加」→「JSON」でキーファイルをダウンロードします。
+作成後、「キー」タブ → 「鍵を追加」→「JSON」でダウンロード
+
+2. Google Drive フォルダをサービスアカウントと共有
+Google Drive で出力先フォルダを作成
+そのフォルダを右クリック → 「共有」
+サービスアカウントのメールアドレス（xxx@xxx.iam.gserviceaccount.com）を「編集者」として追加
+フォルダのURLに含まれるID（https://drive.google.com/drive/folders/【ここ】）をメモ
+
+3. GitHub Secrets に登録
+リポジトリの「Settings」→「Secrets and variables」→「Actions」で4つ登録：
+
+Secret名	値
+NETKEIBA_LOGIN_ID：netkeibaのログインID
+NETKEIBA_PASSWORD：netkeibaのパスワード
+GOOGLE_SERVICE_ACCOUNT_JSON：ダウンロードしたJSONファイルの中身をまるごとコピペ
+GOOGLE_DRIVE_FOLDER_ID：メモしたフォルダID
+
+4. 実行方法
+GitHubのリポジトリページ → 「Actions」→「競馬スクレイピング」→「Run workflow」→ race_idを入力して実行
+
+ローカルでの手動実行は従来通り python main.py で動きます（input() にフォールバックするため）。
