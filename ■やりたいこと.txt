@@ -57,3 +57,12 @@ GOOGLE_DRIVE_FOLDER_ID：メモしたフォルダID
 GitHubのリポジトリページ → 「Actions」→「競馬スクレイピング」→「Run workflow」→ race_idを入力して実行
 
 ローカルでの手動実行は従来通り python main.py で動きます（input() にフォールバックするため）。
+
+## GitHubへのpushコマンド（初回のみ）
+cd /Users/hanekujira/Documents/dev/netkeiba_scraping
+git init
+git branch -m main
+git add .
+git commit -m "initial commit"
+git remote add origin https://github.com/hanekujira/netkeiba.git
+git push -u origin main

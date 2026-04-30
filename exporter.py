@@ -1,5 +1,4 @@
 import io
-import json
 import os
 import logging
 import pandas as pd
@@ -31,19 +30,30 @@ def save_to_csv(df: pd.DataFrame, race_id: str, race_name: str, file_suffix: str
         logging.error(f"CSV出力中にエラーが発生しました ({file_path}): {e}")
         return
 
-    if config.GOOGLE_SERVICE_ACCOUNT_JSON and config.GOOGLE_DRIVE_FOLDER_ID:
+    drive_ready = (
+        config.GOOGLE_OAUTH_CLIENT_ID
+        and config.GOOGLE_OAUTH_CLIENT_SECRET
+        and config.GOOGLE_OAUTH_REFRESH_TOKEN
+        and config.GOOGLE_DRIVE_FOLDER_ID
+    )
+    if drive_ready:
         _upload_to_drive(file_path, file_name, folder_name)
 
 
 def _get_drive_service():
     from googleapiclient.discovery import build
-    from google.oauth2 import service_account
+    from google.oauth2.credentials import Credentials
+    from google.auth.transport.requests import Request
 
-    creds_info = json.loads(config.GOOGLE_SERVICE_ACCOUNT_JSON)
-    creds = service_account.Credentials.from_service_account_info(
-        creds_info,
-        scopes=["https://www.googleapis.com/auth/drive"]
+    creds = Credentials(
+        token=None,
+        refresh_token=config.GOOGLE_OAUTH_REFRESH_TOKEN,
+        client_id=config.GOOGLE_OAUTH_CLIENT_ID,
+        client_secret=config.GOOGLE_OAUTH_CLIENT_SECRET,
+        token_uri="https://oauth2.googleapis.com/token",
+        scopes=["https://www.googleapis.com/auth/drive"],
     )
+    creds.refresh(Request())
     return build("drive", "v3", credentials=creds)
 
 
