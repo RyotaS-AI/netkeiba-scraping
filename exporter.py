@@ -1,6 +1,7 @@
 import io
 import os
 import logging
+from datetime import datetime
 import pandas as pd
 
 import config
@@ -16,7 +17,8 @@ def save_to_csv(df: pd.DataFrame, race_id: str, race_name: str, file_suffix: str
         race_name = race_name.replace(char, ' ')
     race_name = race_name.strip()
 
-    folder_name = f"{race_id}_{race_name}"
+    date_str = datetime.now().strftime("%Y%m%d")
+    folder_name = f"{race_id}_{race_name}_{date_str}"
     folder_path = os.path.join(config.OUTPUT_DIR, folder_name)
     os.makedirs(folder_path, exist_ok=True)
 
