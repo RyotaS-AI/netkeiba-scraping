@@ -1,7 +1,6 @@
 import io
 import os
 import logging
-from datetime import datetime
 import pandas as pd
 
 import config
@@ -17,8 +16,7 @@ def save_to_csv(df: pd.DataFrame, race_id: str, race_name: str, file_suffix: str
         race_name = race_name.replace(char, ' ')
     race_name = race_name.strip()
 
-    date_str = datetime.now().strftime("%Y%m%d")
-    folder_name = f"{race_id}_{race_name}_{date_str}"
+    folder_name = f"{race_id}_{race_name}"
     folder_path = os.path.join(config.OUTPUT_DIR, folder_name)
     os.makedirs(folder_path, exist_ok=True)
 
@@ -60,22 +58,31 @@ def _get_drive_service():
 
 
 def _get_or_create_folder(service, folder_name: str, parent_id: str) -> str:
-    safe_name = folder_name.replace("'", "\\'")
+    # race_id（アンダースコア前の部分）で前方一致検索
+    race_id = folder_name.split("_")[0]
+    safe_race_id = race_id.replace("'", "\\'")
+
     query = (
-        f"name='{safe_name}' and mimeType='application/vnd.google-apps.folder' "
+        f"name contains '{safe_race_id}' and mimeType='application/vnd.google-apps.folder' "
         f"and '{parent_id}' in parents and trashed=false"
     )
-    results = service.files().list(q=query, fields="files(id)").execute()
+    results = service.files().list(q=query, fields="files(id, name)").execute()
     files = results.get("files", [])
-    if files:
-        return files[0]["id"]
 
+    # race_idで始まるフォルダが存在すればそれを返す
+    for f in files:
+        if f["name"].startswith(race_id):
+            logging.info(f"既存フォルダを使用します: {f['name']} (id={f['id']})")
+            return f["id"]
+
+    # 存在しなければ新規作成
     metadata = {
         "name": folder_name,
         "mimeType": "application/vnd.google-apps.folder",
         "parents": [parent_id],
     }
     folder = service.files().create(body=metadata, fields="id").execute()
+    logging.info(f"新規フォルダを作成しました: {folder_name}")
     return folder["id"]
 
 
