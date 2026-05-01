@@ -97,8 +97,28 @@ def _upload_to_drive(file_path: str, file_name: str, subfolder_name: str):
         with open(file_path, "rb") as f:
             content = f.read()
         media = MediaIoBaseUpload(io.BytesIO(content), mimetype="text/csv")
-        metadata = {"name": file_name, "parents": [subfolder_id]}
-        service.files().create(body=metadata, media_body=media).execute()
-        logging.info(f"Google Driveへのアップロード完了: {file_name}")
+
+        # 同名ファイルが既に存在するか確認
+        safe_name = file_name.replace("'", "\\'")
+        query = (
+            f"name='{safe_name}' and '{subfolder_id}' in parents and trashed=false"
+        )
+        results = service.files().list(q=query, fields="files(id, name)").execute()
+        existing_files = results.get("files", [])
+
+        if existing_files:
+            # 既存ファイルを上書き更新
+            existing_file_id = existing_files[0]["id"]
+            service.files().update(
+                fileId=existing_file_id,
+                media_body=media,
+            ).execute()
+            logging.info(f"Google Driveの既存ファイルを更新しました: {file_name}")
+        else:
+            # 新規作成
+            metadata = {"name": file_name, "parents": [subfolder_id]}
+            service.files().create(body=metadata, media_body=media).execute()
+            logging.info(f"Google Driveへのアップロード完了: {file_name}")
+
     except Exception as e:
         logging.error(f"Google Driveへのアップロードに失敗しました ({file_name}): {e}")
