@@ -10,8 +10,7 @@ from scraper import NetkeibaScraper
 from parsers.oikiri_parser import parse_oikiri
 from parsers.comment_parser import parse_comment
 from parsers.past_race_parser import parse_past_race
-from exporter import save_to_csv
-
+from exporter import save_to_csv, check_race_exists_on_drive  # 追加
 
 def run_netkeiba(race_id):
     """netkeibaからレース名を取得し、追い切り・厩舎コメント・馬柱データを取得・保存。
@@ -166,8 +165,8 @@ def main():
         print("エラー: race_idは12桁の数値で入力してください。")
         sys.exit(1)
 
-    # 出力フォルダの存在有無で初回/２回目以降を自動判定
-    race_name = get_shared_race_name(race_id, "")
+    # ローカルフォルダではなくGoogle Driveで初回/2回目を判定
+    race_name = check_race_exists_on_drive(race_id)
     is_first_run = (race_name == "")
 
     if is_first_run:

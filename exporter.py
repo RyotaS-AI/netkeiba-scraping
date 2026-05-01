@@ -122,3 +122,38 @@ def _upload_to_drive(file_path: str, file_name: str, subfolder_name: str):
 
     except Exception as e:
         logging.error(f"Google Driveへのアップロードに失敗しました ({file_name}): {e}")
+
+
+def check_race_exists_on_drive(race_id: str) -> str:
+    """
+    Google Drive上にrace_idで始まるフォルダが存在するか確認し、
+    存在すればレース名を返す。存在しなければ空文字を返す。
+    """
+    drive_ready = (
+        config.GOOGLE_OAUTH_CLIENT_ID
+        and config.GOOGLE_OAUTH_CLIENT_SECRET
+        and config.GOOGLE_OAUTH_REFRESH_TOKEN
+        and config.GOOGLE_DRIVE_FOLDER_ID
+    )
+    if not drive_ready:
+        return ""
+
+    try:
+        service = _get_drive_service()
+        safe_race_id = race_id.replace("'", "\\'")
+        query = (
+            f"name contains '{safe_race_id}' and "
+            f"mimeType='application/vnd.google-apps.folder' and "
+            f"'{config.GOOGLE_DRIVE_FOLDER_ID}' in parents and trashed=false"
+        )
+        results = service.files().list(q=query, fields="files(id, name)").execute()
+        files = results.get("files", [])
+        for f in files:
+            if f["name"].startswith(race_id + "_"):
+                # フォルダ名 "202605020211_フローラS" からレース名部分を返す
+                return f["name"][len(race_id) + 1:]
+        return ""
+    except Exception as e:
+        logging.warning(f"Google Driveのフォルダ確認に失敗しました: {e}")
+        return ""
+
